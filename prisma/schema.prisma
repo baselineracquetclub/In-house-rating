@@ -1,0 +1,76 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Player {
+  id            String   @id @default(cuid())
+  name          String
+  rating        Float    @default(5.0)
+  matchesPlayed Int      @default(0)
+  isActive      Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  matchesAsA Match[] @relation("A")
+  matchesAsB Match[] @relation("B")
+
+  @@index([rating])
+  @@index([isActive])
+}
+
+model MatchFormat {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  kind        FormatKind
+  targetGames Int?
+  winBy       Int      @default(2)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+enum FormatKind {
+  TIMED
+  ONE_SET
+}
+
+model Settings {
+  id           Int    @id @default(1)
+  baseK        Float  @default(0.8)
+  d            Float  @default(2.0)
+  rampMatches  Int    @default(10)
+  minGames     Int    @default(6)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model Match {
+  id          String   @id @default(cuid())
+  playedAt    DateTime @default(now())
+
+  playerAId   String
+  playerBId   String
+  playerA     Player   @relation("A", fields: [playerAId], references: [id])
+  playerB     Player   @relation("B", fields: [playerBId], references: [id])
+
+  formatId    String
+  format      MatchFormat @relation(fields: [formatId], references: [id])
+
+  gamesA      Int
+  gamesB      Int
+
+  expectedA   Float
+  actualA     Float
+  deltaA      Float
+
+  createdAt   DateTime @default(now())
+
+  @@index([playedAt])
+  @@index([playerAId])
+  @@index([playerBId])
+  @@index([formatId])
+}
