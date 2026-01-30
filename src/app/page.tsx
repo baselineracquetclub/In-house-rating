@@ -1,21 +1,41 @@
-export default function Home() {
+import { prisma } from "@/lib/db";
+import { fmt } from "@/lib/utils";
+
+export const dynamic = "force-dynamic";
+
+export default async function Leaderboard() {
+  const players = await prisma.player.findMany({
+    where: { isActive: true },
+    orderBy: [{ rating: "desc" }, { name: "asc" }],
+    take: 50,
+    select: { id: true, name: true, rating: true, matchesPlayed: true },
+  });
+
   return (
     <div className="card">
-      <h1>In-House Matchplay Ratings</h1>
-      <p style={{ marginTop: 6, color: "#d1d5db", lineHeight: 1.5 }}>
-        Enter singles match scores (timed or 1-set formats). Ratings update immediately using a UTR-style
-        model: expected % of games vs actual % of games.
-      </p>
-      <div className="row2" style={{ marginTop: 14 }}>
-        <a className="card" href="/matches">
-          <h3>Enter a match</h3>
-          <small className="muted">Phone-friendly quick entry (recents + favorites).</small>
-        </a>
-        <a className="card" href="/leaderboard">
-          <h3>Leaderboard</h3>
-          <small className="muted">Top players by current rating.</small>
-        </a>
-      </div>
+      <h1>Leaderboard</h1>
+      <small className="muted">Top 50 active players by current rating.</small>
+      <div style={{ height: 10 }} />
+      <table>
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Player</th>
+            <th>Rating</th>
+            <th>Matches</th>
+          </tr>
+        </thead>
+        <tbody>
+          {players.map((p, idx) => (
+            <tr key={p.id}>
+              <td>{idx + 1}</td>
+              <td>{p.name}</td>
+              <td>{fmt(p.rating)}</td>
+              <td>{p.matchesPlayed}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
     </div>
   );
 }
